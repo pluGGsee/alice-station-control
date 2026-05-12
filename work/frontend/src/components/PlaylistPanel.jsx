@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion } from 'motion/react'
 import { Music2, Pencil } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
@@ -12,7 +12,6 @@ export default function PlaylistPanel() {
   const [customCovers, setCustomCovers] = useState(() => {
     try { return JSON.parse(localStorage.getItem('playlist_covers') || '{}') } catch { return {} }
   })
-  const fileRef = useRef(null)
   const kindRef = useRef(null)
 
   useEffect(() => {
@@ -24,36 +23,39 @@ export default function PlaylistPanel() {
 
   function cover(pl) { return customCovers[pl.id] || null }
 
-  function onCoverClick(e, id) { e.stopPropagation(); kindRef.current = id; fileRef.current?.click() }
-
-  async function onFile(e) {
-    const file = e.target.files?.[0]
-    if (!file || !kindRef.current) return
-    e.target.value = ''
-    const id = kindRef.current
-    const fd = new FormData(); fd.append('kind', id); fd.append('file', file)
-    try {
-      const { data } = await axios.post('/api/music/playlist-cover', fd)
-      const c = { ...customCovers, [id]: data.url + '?t=' + Date.now() }
-      setCustomCovers(c); localStorage.setItem('playlist_covers', JSON.stringify(c))
-      toast.success('Обложка обновлена')
-    } catch {
-      const reader = new FileReader()
-      reader.onload = () => {
-        const c = { ...customCovers, [id]: reader.result }
+  function onCoverClick(e, id) {
+    e.stopPropagation()
+    kindRef.current = id
+    // Создаём input динамически — не держим в DOM
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = async (ev) => {
+      const file = ev.target.files?.[0]
+      if (!file) return
+      const fd = new FormData(); fd.append('kind', id); fd.append('file', file)
+      try {
+        const { data } = await axios.post('/api/music/playlist-cover', fd)
+        const c = { ...customCovers, [id]: data.url + '?t=' + Date.now() }
         setCustomCovers(c); localStorage.setItem('playlist_covers', JSON.stringify(c))
         toast.success('Обложка обновлена')
+      } catch {
+        const reader = new FileReader()
+        reader.onload = () => {
+          const c = { ...customCovers, [id]: reader.result }
+          setCustomCovers(c); localStorage.setItem('playlist_covers', JSON.stringify(c))
+          toast.success('Обложка обновлена')
+        }
+        reader.readAsDataURL(file)
       }
-      reader.readAsDataURL(file)
     }
+    input.click()
   }
 
   return (
     <>
       <div className="g-panel rounded-3xl p-5 flex flex-col gap-2">
         <p className="text-xs font-semibold text-[#8e8e93] uppercase tracking-widest mb-1">Мои плейлисты</p>
-
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
 
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
@@ -90,9 +92,7 @@ export default function PlaylistPanel() {
         )}
       </div>
 
-      <AnimatePresence>
-        {selected && <PlaylistModal playlist={selected} onClose={() => setSelected(null)} />}
-      </AnimatePresence>
+      {selected && <PlaylistModal playlist={selected} onClose={() => setSelected(null)} />}
     </>
   )
 }

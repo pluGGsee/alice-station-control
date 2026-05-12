@@ -109,16 +109,30 @@ def get_playlists() -> list:
 
 
 def get_playlist_tracks(kind: int, limit: int = 50) -> list:
-    """Загружает первые N треков плейлиста."""
+    """Загружает первые N треков плейлиста одним пакетным запросом."""
     try:
         client = _get_client()
         playlist = client.users_playlists(kind=kind)
         if not playlist or not playlist.tracks:
             return []
+
+        # Собираем track_id пакетом — один запрос вместо N
+        track_ids = [
+            f"{t.id}:{t.album_id}" if hasattr(t, 'album_id') and t.album_id else str(t.id)
+            for t in playlist.tracks[:limit]
+        ]
+        # Альтернативный способ — через TrackShort.fetch_track батчем
+        short_tracks = playlist.tracks[:limit]
+        track_id_list = [t.id for t in short_tracks]
+        album_id_list = [getattr(t, 'album_id', None) for t in short_tracks]
+
+        # Пакетный запрос
+        full_ids = [f"{tid}:{aid}" if aid else str(tid) for tid, aid in zip(track_id_list, album_id_list)]
+        fetched = client.tracks(full_ids)
+
         tracks = []
-        for t in playlist.tracks[:limit]:
+        for track in (fetched or []):
             try:
-                track = t.fetch_track()
                 artists = ", ".join(a.name for a in (track.artists or []))
                 tracks.append({
                     "id": str(track.id),

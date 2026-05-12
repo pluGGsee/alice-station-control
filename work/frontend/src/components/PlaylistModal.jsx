@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { createPortal } from 'react-dom'
+import { motion } from 'motion/react'
 import { X, Music2, Play } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
@@ -29,7 +30,7 @@ export default function PlaylistModal({ playlist, onClose }) {
     } catch { toast.error('Ошибка') }
   }
 
-  return (
+  return createPortal(
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center p-6"
       initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
@@ -95,6 +96,7 @@ export default function PlaylistModal({ playlist, onClose }) {
           )}
         </div>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   )
 }
