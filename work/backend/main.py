@@ -1,12 +1,13 @@
 import warnings
+import os
+import shutil
 warnings.filterwarnings("ignore")
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-import os
 
 import station
 import music
@@ -19,6 +20,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Папка для пользовательских обложек плейлистов
+COVERS_DIR = os.path.join(os.path.dirname(__file__), "static", "covers")
+os.makedirs(COVERS_DIR, exist_ok=True)
+
+# Отдаём статику обложек
+app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
 
 
 # --- Schemas ---
@@ -81,7 +89,6 @@ async def command(payload: TextPayload):
 
 @app.get("/api/music/current")
 def current_track():
-    # Оставляем для совместимости, но основной источник трека — /api/status
     track = music.get_current_track()
     return track if track else {}
 
@@ -95,17 +102,30 @@ def search(q: str):
 def playlists():
     return {"playlists": music.get_playlists()}
 
+@app.get("/api/music/playlist-tracks")
+def playlist_tracks(kind: int):
+    return {"tracks": music.get_playlist_tracks(kind)}
+
 @app.post("/api/music/play-track")
 async def play_track(payload: TrackPayload):
-    # Запускаем трек командой Алисе
     tracks = music.search_tracks(payload.track_id, limit=1)
     if tracks:
         t = tracks[0]
         await station.send_command(f"включи {t['title']} {t['artist']}")
     return {"ok": True}
 
+@app.post("/api/music/playlist-cover")
+async def upload_playlist_cover(kind: str = Form(...), file: UploadFile = File(...)):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
+    path = os.path.join(COVERS_DIR, f"{kind}.{ext}")
+    with open(path, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    return {"ok": True, "url": f"/static/covers/{kind}.{ext}"}
 
-# --- Static frontend (после сборки npm run build) ---
+
+# --- Static frontend (после npm run build) ---
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 if os.path.exists(STATIC_DIR):

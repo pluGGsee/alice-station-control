@@ -26,16 +26,10 @@ export default function PlayerCard({ status, track, onVolumeChange, volumeValue 
   }
 
   return (
-    <motion.div
-      className="bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl rounded-3xl p-5 flex flex-col gap-4"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
+    <div className="glass-panel rounded-3xl p-5 flex flex-col gap-4">
       {/* Трек */}
       <div className="flex items-center gap-3">
-        {/* Обложка */}
-        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-purple-50 flex-shrink-0 shadow-md">
+        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-purple-50 flex-shrink-0 shadow-sm">
           <AnimatePresence mode="wait">
             {track?.cover_url ? (
               <motion.img
@@ -61,7 +55,6 @@ export default function PlayerCard({ status, track, onVolumeChange, volumeValue 
           </AnimatePresence>
         </div>
 
-        {/* Инфо */}
         <div className="flex-1 min-w-0">
           <AnimatePresence mode="wait">
             <motion.div
@@ -69,25 +62,24 @@ export default function PlayerCard({ status, track, onVolumeChange, volumeValue 
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.25 }}
+              transition={{ duration: 0.2 }}
             >
-              <p className="font-semibold text-slate-800 truncate text-sm leading-snug">
+              <p className="font-semibold text-slate-800 truncate text-sm">
                 {track?.title ?? 'Ничего не играет'}
               </p>
-              <p className="text-slate-400 text-xs truncate mt-0.5">
+              <p className="text-slate-500 text-xs truncate mt-0.5">
                 {track?.artist ?? (isPlaying ? 'Воспроизведение...' : '—')}
               </p>
             </motion.div>
           </AnimatePresence>
         </div>
 
-        {/* Индикатор воспроизведения */}
         {isPlaying && (
           <div className="flex items-end gap-0.5 h-4 flex-shrink-0">
             {[0, 1, 2].map(i => (
               <motion.div
                 key={i}
-                className="w-1 bg-purple-400 rounded-full"
+                className="w-1 bg-purple-500 rounded-full"
                 animate={{ height: ['4px', '14px', '4px'] }}
                 transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2, ease: 'easeInOut' }}
               />
@@ -96,7 +88,7 @@ export default function PlayerCard({ status, track, onVolumeChange, volumeValue 
         )}
       </div>
 
-      {/* Кнопки */}
+      {/* Управление */}
       <div className="flex items-center justify-center gap-3">
         <motion.button
           onClick={handlePrev}
@@ -109,7 +101,7 @@ export default function PlayerCard({ status, track, onVolumeChange, volumeValue 
         <motion.button
           onClick={isPlaying ? handlePause : handlePlay}
           whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-          className="w-13 h-13 w-12 h-12 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center shadow-lg shadow-purple-200 transition-colors"
+          className="w-12 h-12 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center shadow-lg shadow-purple-200 transition-colors"
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -135,7 +127,7 @@ export default function PlayerCard({ status, track, onVolumeChange, volumeValue 
 
       {/* Громкость */}
       <div className="flex items-center gap-3">
-        <Volume2 size={15} className="text-slate-300 flex-shrink-0" />
+        <Volume2 size={14} className="text-slate-400 flex-shrink-0" />
         <Slider
           min={0} max={10} step={1}
           value={[volume]}
@@ -144,6 +136,6 @@ export default function PlayerCard({ status, track, onVolumeChange, volumeValue 
         />
         <span className="text-xs text-slate-400 w-4 text-right tabular-nums">{volume}</span>
       </div>
-    </motion.div>
+    </div>
   )
 }

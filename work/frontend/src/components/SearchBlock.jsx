@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { Search, Music } from 'lucide-react'
+import { Search, Music2, Play } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
@@ -40,14 +40,8 @@ export default function SearchBlock() {
   }
 
   return (
-    <motion.div
-      className="bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl rounded-3xl p-6 flex flex-col gap-4"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.3 }}
-    >
-      <h3 className="font-semibold text-slate-700 text-sm flex items-center gap-2">
-        <Music size={16} className="text-purple-500" />
+    <div className="glass-panel rounded-3xl p-5 flex flex-col gap-3">
+      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-0.5">
         Поиск музыки
       </h3>
 
@@ -55,15 +49,15 @@ export default function SearchBlock() {
         <input
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Название трека или исполнитель..."
-          className="flex-1 rounded-2xl border border-white/60 bg-white/50 px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all"
+          placeholder="Название или исполнитель..."
+          className="flex-1 rounded-2xl border border-white/60 bg-white/50 px-4 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:bg-white/70 transition-all"
         />
         <motion.button
           type="submit"
           disabled={loading || query.trim().length < 2}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="px-4 py-2.5 rounded-2xl bg-purple-600 hover:bg-purple-700 disabled:bg-slate-200 text-white transition-colors shadow-lg shadow-purple-200"
+          className="px-4 py-2.5 rounded-2xl bg-purple-600 hover:bg-purple-700 disabled:bg-slate-200 disabled:text-slate-400 text-white transition-colors shadow-md shadow-purple-200"
         >
           {loading ? (
             <motion.div
@@ -80,7 +74,7 @@ export default function SearchBlock() {
       <AnimatePresence>
         {results.length > 0 && (
           <motion.div
-            className="flex flex-col gap-1 max-h-64 overflow-y-auto pr-1"
+            className="flex flex-col gap-0.5 max-h-60 overflow-y-auto"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
@@ -89,18 +83,23 @@ export default function SearchBlock() {
               <motion.button
                 key={track.id}
                 onClick={() => handlePlay(track)}
-                initial={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.03 }}
-                whileHover={{ x: 4 }}
-                className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-purple-50 transition-colors text-left group"
+                whileHover={{ x: 3 }}
+                className="flex items-center gap-3 p-2 rounded-2xl hover:bg-purple-50 transition-colors text-left group"
               >
-                <div className="w-10 h-10 rounded-xl overflow-hidden bg-purple-100 flex-shrink-0">
+                <div className="w-9 h-9 rounded-xl overflow-hidden bg-purple-50 flex-shrink-0 relative">
                   {track.cover_url ? (
                     <img src={track.cover_url} alt="" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-sm">🎵</div>
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Music2 size={14} className="text-purple-300" />
+                    </div>
                   )}
+                  <div className="absolute inset-0 bg-purple-600/0 group-hover:bg-purple-600/15 flex items-center justify-center transition-all">
+                    <Play size={11} className="text-white opacity-0 group-hover:opacity-100 ml-0.5" />
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-slate-800 truncate group-hover:text-purple-700 transition-colors">
@@ -108,12 +107,14 @@ export default function SearchBlock() {
                   </p>
                   <p className="text-xs text-slate-400 truncate">{track.artist}</p>
                 </div>
-                <span className="text-xs text-slate-300 flex-shrink-0">{msToMin(track.duration_ms)}</span>
+                <span className="text-xs text-slate-300 flex-shrink-0 tabular-nums">
+                  {msToMin(track.duration_ms)}
+                </span>
               </motion.button>
             ))}
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   )
 }

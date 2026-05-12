@@ -93,14 +93,51 @@ def get_playlists() -> list:
     try:
         client = _get_client()
         playlists = client.users_playlists_list()
-        return [
-            {
+        result = []
+        for p in (playlists or []):
+            # Берём обложку из первого трека плейлиста
+            cover_url = None
+            try:
+                if p.track_count and p.track_count > 0:
+                    full = client.users_playlists(kind=p.kind)
+                    if full and full.tracks:
+                        first = full.tracks[0].fetch_track()
+                        cover_url = _cover(first.cover_uri, "200x200")
+            except Exception:
+                pass
+            result.append({
                 "id": str(p.kind),
                 "title": p.title,
                 "track_count": p.track_count,
-            }
-            for p in (playlists or [])
-        ]
+                "cover_url": cover_url,
+            })
+        return result
     except Exception as e:
         logger.debug(f"get_playlists error: {e}")
+        return []
+
+
+def get_playlist_tracks(kind: int) -> list:
+    try:
+        client = _get_client()
+        playlist = client.users_playlists(kind=kind)
+        if not playlist or not playlist.tracks:
+            return []
+        tracks = []
+        for t in playlist.tracks:
+            try:
+                track = t.fetch_track()
+                artists = ", ".join(a.name for a in (track.artists or []))
+                tracks.append({
+                    "id": str(track.id),
+                    "title": track.title,
+                    "artist": artists,
+                    "cover_url": _cover(track.cover_uri, "100x100"),
+                    "duration_ms": track.duration_ms,
+                })
+            except Exception:
+                continue
+        return tracks
+    except Exception as e:
+        logger.debug(f"get_playlist_tracks error: {e}")
         return []
