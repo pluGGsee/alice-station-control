@@ -40,7 +40,13 @@ export default function SearchBlock() {
   }
 
   return (
-    <div className="glass-panel rounded-3xl p-5 flex flex-col gap-3">
+    <div className="rounded-3xl p-5 flex flex-col gap-3" style={{
+      background: 'rgba(255,255,255,0.58)',
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
+      border: '1px solid rgba(255,255,255,0.75)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+    }}>
       <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-0.5">
         Поиск музыки
       </h3>

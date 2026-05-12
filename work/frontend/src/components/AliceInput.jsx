@@ -23,7 +23,6 @@ export default function AliceInput() {
   const recognitionRef = useRef(null)
   const textareaRef = useRef(null)
 
-  // Инициализация Web Speech API
   const speechSupported = typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
 
@@ -33,7 +32,7 @@ export default function AliceInput() {
     setLoading(true)
     try {
       await axios.post('/api/command', { text: value })
-      toast.success(`✓ ${value.length > 30 ? value.slice(0, 30) + '...' : value}`)
+      toast.success(`✓ ${value.length > 32 ? value.slice(0, 32) + '…' : value}`)
       setText('')
     } catch {
       toast.error('Ошибка отправки')
@@ -43,43 +42,31 @@ export default function AliceInput() {
   }
 
   function handleKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
   }
 
   function handleMic() {
     if (!speechSupported) {
-      toast.error('Браузер не поддерживает диктовку. Используйте Chrome или Edge.')
+      toast.error('Диктовка работает только в Chrome/Edge')
       return
     }
-    if (listening) {
-      recognitionRef.current?.stop()
-      return
-    }
+    if (listening) { recognitionRef.current?.stop(); return }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-    const recognition = new SpeechRecognition()
-    recognition.lang = 'ru-RU'
-    recognition.interimResults = false
-    recognition.maxAlternatives = 1
-
-    recognition.onstart = () => setListening(true)
-    recognition.onend = () => setListening(false)
-    recognition.onerror = () => {
-      setListening(false)
-      toast.error('Ошибка микрофона')
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    const r = new SR()
+    r.lang = 'ru-RU'
+    r.interimResults = false
+    r.maxAlternatives = 1
+    r.onstart = () => setListening(true)
+    r.onend = () => setListening(false)
+    r.onerror = () => { setListening(false); toast.error('Ошибка микрофона') }
+    r.onresult = (e) => {
+      const t = e.results[0][0].transcript
+      setText(t)
+      setTimeout(() => handleSend(t), 100)
     }
-    recognition.onresult = (e) => {
-      const transcript = e.results[0][0].transcript
-      setText(transcript)
-      // Автоотправка после диктовки
-      setTimeout(() => handleSend(transcript), 100)
-    }
-
-    recognitionRef.current = recognition
-    recognition.start()
+    recognitionRef.current = r
+    r.start()
   }
 
   function handleTemplate(label) {
@@ -92,26 +79,19 @@ export default function AliceInput() {
     try {
       await axios.post('/api/command', { text: 'включи мою волну' })
       toast.success('🌊 Моя волна')
-    } catch {
-      toast.error('Ошибка')
-    }
+    } catch { toast.error('Ошибка') }
   }
 
-  // Закрыть шаблоны при клике вне
   useEffect(() => {
     if (!showTemplates) return
-    const handler = (e) => {
-      if (!e.target.closest('[data-templates]')) setShowTemplates(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
+    const h = (e) => { if (!e.target.closest('[data-templates]')) setShowTemplates(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
   }, [showTemplates])
 
   return (
-    <div className="p-4 flex flex-col gap-3">
-      <p className="text-xs font-medium text-white/40 uppercase tracking-widest px-1">
-        Алиса
-      </p>
+    <div className="p-5 flex flex-col gap-3">
+      <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Алиса</p>
 
       {/* Поле ввода */}
       <div className="relative">
@@ -120,16 +100,21 @@ export default function AliceInput() {
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={handleKey}
-          placeholder="Скажи что-нибудь Алисе..."
+          placeholder="Напиши или надиктуй команду Алисе..."
           rows={3}
-          className="w-full resize-none rounded-2xl px-4 py-3 pr-10 text-sm text-white/90 placeholder:text-white/30 bg-white/10 border border-white/15 focus:outline-none focus:border-purple-400/50 focus:bg-white/15 transition-all leading-relaxed"
+          className="w-full resize-none rounded-2xl px-4 py-3 pr-11 text-sm text-slate-800 placeholder:text-slate-400 leading-relaxed transition-all focus:outline-none"
+          style={{
+            background: 'rgba(255,255,255,0.45)',
+            border: '1px solid rgba(255,255,255,0.65)',
+          }}
+          onFocus={e => { e.target.style.background = 'rgba(255,255,255,0.65)'; e.target.style.borderColor = 'rgba(124,58,237,0.4)' }}
+          onBlur={e => { e.target.style.background = 'rgba(255,255,255,0.45)'; e.target.style.borderColor = 'rgba(255,255,255,0.65)' }}
         />
-        {/* Кнопка отправить */}
         <motion.button
           onClick={() => handleSend()}
           disabled={!text.trim() || loading}
           whileTap={{ scale: 0.9 }}
-          className="absolute right-2.5 bottom-2.5 w-7 h-7 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+          className="absolute right-2.5 bottom-2.5 w-7 h-7 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors shadow-md shadow-purple-200"
         >
           {loading
             ? <motion.div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full" animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }} />
@@ -143,26 +128,17 @@ export default function AliceInput() {
         {/* Микрофон */}
         <motion.button
           onClick={handleMic}
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium transition-all border ${
             listening
-              ? 'bg-red-500/80 border-red-400/50 text-white'
-              : 'bg-white/10 border-white/15 text-white/70 hover:bg-white/15 hover:text-white'
+              ? 'bg-red-500 border-red-400 text-white shadow-md shadow-red-200'
+              : 'bg-white/50 border-white/70 text-slate-600 hover:bg-white/70 hover:text-slate-800'
           }`}
         >
           {listening ? (
-            <>
-              <motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }}>
-                <MicOff size={14} />
-              </motion.div>
-              Стоп
-            </>
+            <><motion.div animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 0.8, repeat: Infinity }}><MicOff size={13} /></motion.div> Стоп</>
           ) : (
-            <>
-              <Mic size={14} />
-              Диктовка
-            </>
+            <><Mic size={13} /> Диктовка</>
           )}
         </motion.button>
 
@@ -170,39 +146,41 @@ export default function AliceInput() {
         <div className="relative flex-1" data-templates>
           <motion.button
             onClick={() => setShowTemplates(v => !v)}
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
             className={`w-full flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium transition-all border ${
               showTemplates
-                ? 'bg-purple-600/80 border-purple-400/50 text-white'
-                : 'bg-white/10 border-white/15 text-white/70 hover:bg-white/15 hover:text-white'
+                ? 'bg-purple-600 border-purple-500 text-white shadow-md shadow-purple-200'
+                : 'bg-white/50 border-white/70 text-slate-600 hover:bg-white/70 hover:text-slate-800'
             }`}
           >
-            <LayoutTemplate size={14} />
-            Шаблоны
+            <LayoutTemplate size={13} /> Шаблоны
           </motion.button>
 
           <AnimatePresence>
             {showTemplates && (
               <motion.div
-                initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                initial={{ opacity: 0, y: 6, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                exit={{ opacity: 0, y: 6, scale: 0.97 }}
                 transition={{ duration: 0.15 }}
                 className="absolute bottom-full mb-2 left-0 right-0 z-50 rounded-2xl overflow-hidden"
-                style={{ background: 'rgba(20,16,38,0.96)', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 16px 40px rgba(0,0,0,0.4)' }}
+                style={{
+                  background: 'rgba(255,255,255,0.92)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,0.95)',
+                  boxShadow: '0 16px 40px rgba(0,0,0,0.16)',
+                }}
               >
                 {TEMPLATES.map((t, i) => (
                   <motion.button
                     key={t.label}
                     onClick={() => handleTemplate(t.label)}
-                    initial={{ opacity: 0, x: -8 }}
+                    initial={{ opacity: 0, x: -6 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.03 }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-white/80 hover:bg-white/10 hover:text-white transition-colors text-left"
+                    transition={{ delay: i * 0.025 }}
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors text-left"
                   >
-                    <span className="text-base leading-none">{t.emoji}</span>
-                    {t.label}
+                    <span className="text-sm">{t.emoji}</span> {t.label}
                   </motion.button>
                 ))}
               </motion.div>
@@ -213,16 +191,14 @@ export default function AliceInput() {
         {/* Моя волна */}
         <motion.button
           onClick={handleMyWave}
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium bg-white/10 border border-white/15 text-white/70 hover:bg-white/15 hover:text-white transition-all"
+          whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium bg-white/50 border border-white/70 text-slate-600 hover:bg-white/70 hover:text-slate-800 transition-all"
         >
-          <Waves size={14} />
-          Волна
+          <Waves size={13} /> Волна
         </motion.button>
       </div>
 
-      <p className="text-xs text-white/25 px-1">Enter — отправить · Shift+Enter — новая строка</p>
+      <p className="text-xs text-slate-400 px-0.5">Enter — отправить · Shift+Enter — строка</p>
     </div>
   )
 }

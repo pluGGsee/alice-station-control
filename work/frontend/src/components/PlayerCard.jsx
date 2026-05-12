@@ -25,8 +25,16 @@ export default function PlayerCard({ status, track, onVolumeChange, volumeValue 
     try { await axios.post('/api/volume', { value: v }); onVolumeChange?.(v) } catch { /* silent */ }
   }
 
+  const panelStyle = {
+    background: 'rgba(255,255,255,0.58)',
+    backdropFilter: 'blur(24px)',
+    WebkitBackdropFilter: 'blur(24px)',
+    border: '1px solid rgba(255,255,255,0.75)',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+  }
+
   return (
-    <div className="glass-panel rounded-3xl p-5 flex flex-col gap-4">
+    <div className="rounded-3xl p-5 flex flex-col gap-4" style={panelStyle}>
       {/* Трек */}
       <div className="flex items-center gap-3">
         <div className="w-14 h-14 rounded-2xl overflow-hidden bg-purple-50 flex-shrink-0 shadow-sm">
