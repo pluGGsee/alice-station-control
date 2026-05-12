@@ -50,7 +50,7 @@
 ### 1. Клонировать репозиторий
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/alice-station-control.git
+git clone https://github.com/pluGGsee/alice-station-control.git
 cd alice-station-control
 ```
 
