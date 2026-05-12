@@ -66,9 +66,9 @@ export default function PlaylistModal({ playlist, onClose }) {
         exit={{ scale: 0.93, opacity: 0, y: 16 }}
         transition={{ type: 'spring', damping: 26, stiffness: 320 }}
         style={{
-          background: 'rgba(218,218,222,0.96)',
-          backdropFilter: 'blur(28px)',
-          border: '1px solid rgba(255,255,255,0.75)',
+          background: 'rgba(218,218,222,0.55)',
+          backdropFilter: 'blur(48px)',
+          border: '1px solid rgba(255,255,255,0.60)',
           boxShadow: '0 24px 60px rgba(0,0,0,0.18)',
         }}
       >
@@ -85,7 +85,7 @@ export default function PlaylistModal({ playlist, onClose }) {
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="font-semibold text-[#1c1c1e] text-sm truncate">{playlist.title}</h2>
-            <p className="text-xs text-[#8e8e93]">{playlist.track_count} треков</p>
+            <p className="text-sm text-[#555558]">{playlist.track_count} треков</p>
           </div>
           <motion.button onClick={onClose} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
             className="g-btn w-8 h-8 rounded-xl flex items-center justify-center">
@@ -122,9 +122,9 @@ export default function PlaylistModal({ playlist, onClose }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-[#1c1c1e] truncate">{track.title}</p>
-                    <p className="text-xs text-[#8e8e93] truncate">{track.artist}</p>
+                    <p className="text-sm text-[#555558] truncate">{track.artist}</p>
                   </div>
-                  <span className="text-xs text-[#aeaeb2] flex-shrink-0 tabular-nums">
+                  <span className="text-sm text-[#6e6e73] flex-shrink-0 tabular-nums">
                     {msToMin(track.duration_ms)}
                   </span>
                 </motion.button>

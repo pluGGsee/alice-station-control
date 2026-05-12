@@ -63,30 +63,30 @@ export default function PlaylistPanel() {
             <div key={i} className="h-14 rounded-2xl bg-black/6 animate-pulse" />
           ))
         ) : playlists.length === 0 ? (
-          <p className="text-xs text-[#aeaeb2] text-center py-3">Нет плейлистов</p>
+          <p className="text-sm text-[#6e6e73] text-center py-3">Нет плейлистов</p>
         ) : (
           playlists.map((pl, i) => (
             <motion.div key={pl.id}
               initial={{ opacity:0, x:8 }} animate={{ opacity:1, x:0 }} transition={{ delay: i*0.06 }}
               onClick={() => setSelected(pl)}
-              whileHover={{ x:3 }}
-              className="g-row flex items-center gap-3 px-2 py-2.5 rounded-2xl cursor-pointer transition-colors group">
-              <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-black/8 flex-shrink-0">
+              whileHover={{ y: -2 }}
+              className="g-row flex items-center gap-4 px-3 py-3 rounded-2xl cursor-pointer transition-all group">
+              <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-black/8 flex-shrink-0 shadow-sm">
                 {cover(pl) ? (
                   <img src={cover(pl)} alt="" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Music2 size={15} className="text-[#8e8e93]" />
+                    <Music2 size={22} className="text-[#8e8e93]" />
                   </div>
                 )}
                 <button onClick={(e) => onCoverClick(e, pl.id)}
-                  className="absolute inset-0 bg-black/35 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Pencil size={10} className="text-white" />
+                  className="absolute inset-0 bg-black/35 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+                  <Pencil size={13} className="text-white" />
                 </button>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#1c1c1e] truncate">{pl.title}</p>
-                <p className="text-xs text-[#8e8e93] mt-0.5">{pl.track_count} треков</p>
+                <p className="text-base font-semibold text-[#1c1c1e] truncate">{pl.title}</p>
+                <p className="text-sm text-[#555558] mt-0.5">{pl.track_count} треков</p>
               </div>
             </motion.div>
           ))

@@ -18,7 +18,7 @@ export default function PlayerCard({ status, track, onVolumeChange, volumeValue 
     <div className="g-panel rounded-3xl p-6 flex flex-col items-center gap-4">
 
       {/* Обложка по центру */}
-      <div className="w-36 h-36 rounded-3xl overflow-hidden bg-[rgba(0,0,0,0.08)] flex-shrink-0 shadow-md">
+      <div className="w-64 h-64 rounded-3xl overflow-hidden bg-[rgba(0,0,0,0.08)] flex-shrink-0 shadow-md">
         <AnimatePresence mode="wait">
           {track?.cover_url ? (
             <motion.img key={track.cover_url} src={track.cover_url} alt="cover"
@@ -30,7 +30,7 @@ export default function PlayerCard({ status, track, onVolumeChange, volumeValue 
           ) : (
             <motion.div key="ph" className="w-full h-full flex items-center justify-center"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <Music2 size={40} className="text-[#8e8e93]" />
+              <Music2 size={52} className="text-[#8e8e93]" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -42,10 +42,10 @@ export default function PlayerCard({ status, track, onVolumeChange, volumeValue 
           <motion.div key={track?.id ?? 'empty'}
             initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }}>
-            <p className="font-semibold text-[#1c1c1e] text-base truncate leading-snug">
+            <p className="font-bold text-[#1c1c1e] text-lg truncate leading-snug">
               {track?.title ?? 'Ничего не играет'}
             </p>
-            <p className="text-[#8e8e93] text-sm truncate mt-1">
+            <p className="text-[#555558] text-sm font-medium truncate mt-1">
               {track?.artist ?? '—'}
             </p>
           </motion.div>
@@ -93,10 +93,10 @@ export default function PlayerCard({ status, track, onVolumeChange, volumeValue 
       </div>
 
       {/* Громкость */}
-      <div className="flex items-center gap-3 w-full">
-        <Volume2 size={13} className="text-[#8e8e93] flex-shrink-0" />
+      <div className="flex items-center gap-2 w-72">
+        <Volume2 size={11} className="text-[#aeaeb2] flex-shrink-0" />
         <Slider min={0} max={10} step={1} value={[volume]} onValueChange={handleVolume} className="flex-1" />
-        <span className="text-xs text-[#8e8e93] w-4 text-right tabular-nums">{volume}</span>
+        <span className="text-xs text-[#aeaeb2] w-4 text-right tabular-nums">{volume}</span>
       </div>
     </div>
   )

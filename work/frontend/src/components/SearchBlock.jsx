@@ -68,9 +68,9 @@ export default function SearchBlock() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[#1c1c1e] truncate">{track.title}</p>
-                  <p className="text-xs text-[#8e8e93] truncate">{track.artist}</p>
+                  <p className="text-sm text-[#555558] truncate">{track.artist}</p>
                 </div>
-                <span className="text-xs text-[#aeaeb2] flex-shrink-0 tabular-nums">{msToMin(track.duration_ms)}</span>
+                <span className="text-sm text-[#6e6e73] flex-shrink-0 tabular-nums">{msToMin(track.duration_ms)}</span>
               </motion.button>
             ))}
           </motion.div>

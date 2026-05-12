@@ -57,33 +57,41 @@ export default function App() {
           </div>
           <div>
             <h1 className="text-sm font-semibold text-[#1c1c1e] leading-none tracking-tight">Alice Station</h1>
-            <p className="text-xs text-[#6e6e73] mt-0.5">Яндекс Станция Миди</p>
+            <p className="text-sm text-[#555558] mt-0.5">Яндекс Станция Миди</p>
           </div>
         </div>
         <StatusBadge online={status.online} aliceState={status.aliceState} />
       </header>
 
-      {/* 2 колонки — одинаковые */}
-      <div className="flex-1 flex gap-4 p-4 overflow-hidden">
+      {/* 2 колонки — одинаковые по высоте */}
+      <div className="flex-1 flex gap-4 p-4 min-h-0">
 
         {/* Левая */}
-        <div className="flex-1 flex flex-col gap-4 overflow-y-auto min-w-0">
-          <div className="g-panel rounded-3xl overflow-hidden">
+        <div className="flex-1 flex flex-col gap-4 overflow-y-auto min-w-0 min-h-0">
+          <div className="g-panel rounded-3xl overflow-hidden flex-shrink-0">
             <AliceInput />
           </div>
-          <PlayerCard
-            status={status}
-            track={status.track}
-            volumeValue={volumeValue}
-            onVolumeChange={(v) => setStatus(s => ({ ...s, volume: v / 10 }))}
-          />
+          <div className="flex-shrink-0">
+            <PlayerCard
+              status={status}
+              track={status.track}
+              volumeValue={volumeValue}
+              onVolumeChange={(v) => setStatus(s => ({ ...s, volume: v / 10 }))}
+            />
+          </div>
+          <div className="flex-shrink-0">
+            <SearchBlock />
+          </div>
         </div>
 
         {/* Правая */}
-        <div className="flex-1 flex flex-col gap-4 overflow-y-auto min-w-0">
-          <QuickCommands />
-          <PlaylistPanel />
-          <SearchBlock />
+        <div className="flex-1 flex flex-col gap-4 overflow-y-auto min-w-0 min-h-0">
+          <div className="flex-shrink-0">
+            <QuickCommands />
+          </div>
+          <div className="flex-shrink-0">
+            <PlaylistPanel />
+          </div>
         </div>
       </div>
     </div>

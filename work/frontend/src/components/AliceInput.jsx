@@ -79,8 +79,9 @@ export default function AliceInput() {
           onChange={e => setText(e.target.value)}
           onKeyDown={handleKey}
           placeholder="Напиши или надиктуй команду..."
-          rows={3}
-          className="g-input w-full resize-none rounded-2xl px-4 py-3 pr-11 text-sm leading-relaxed"
+          rows={5}
+          style={{ paddingTop: '8px', paddingBottom: '8px' }}
+          className="g-input w-full resize-none rounded-2xl px-4 pr-11 text-sm leading-relaxed"
         />
         <motion.button
           onClick={() => handleSend()}
@@ -120,12 +121,12 @@ export default function AliceInput() {
                 exit={{ opacity: 0, y: -6, scale: 0.97 }}
                 transition={{ duration: 0.15 }}
                 className="absolute top-full mt-2 left-0 z-50 rounded-2xl overflow-hidden"
-                style={{ minWidth: '240px', width: 'max-content', background:'rgba(225,225,228,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(255,255,255,0.7)', boxShadow:'0 12px 32px rgba(0,0,0,0.14)' }}
+                style={{ minWidth: '240px', width: 'max-content', background:'rgba(215,215,220,0.55)', backdropFilter:'blur(48px)', WebkitBackdropFilter:'blur(48px)', border:'1px solid rgba(255,255,255,0.55)', boxShadow:'0 12px 32px rgba(0,0,0,0.10)' }}
               >
                 {TEMPLATES.map((t, i) => (
                   <motion.button key={t.label} onClick={() => handleTemplate(t.label)}
                     initial={{ opacity:0, x:-4 }} animate={{ opacity:1, x:0 }} transition={{ delay: i*0.02 }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs text-[#3a3a3c] hover:bg-black/6 transition-colors text-left">
+                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-[#1c1c1e] hover:bg-black/6 transition-colors text-left">
                     <span className="text-sm">{t.emoji}</span> {t.label}
                   </motion.button>
                 ))}
@@ -141,7 +142,7 @@ export default function AliceInput() {
         </motion.button>
       </div>
 
-      <p className="text-xs text-[#aeaeb2] px-0.5">Enter — отправить · Shift+Enter — строка</p>
+      <p className="text-sm text-[#8e8e93] px-0.5">Enter — отправить · Shift+Enter — строка</p>
     </div>
   )
 }
