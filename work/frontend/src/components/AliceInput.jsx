@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { Mic, LayoutTemplate, Waves, Send, MicOff } from 'lucide-react'
 import axios from 'axios'
@@ -20,8 +21,10 @@ export default function AliceInput() {
   const [listening, setListening] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 })
   const recognitionRef = useRef(null)
   const textareaRef = useRef(null)
+  const templateBtnRef = useRef(null)
 
   const speechSupported = typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
@@ -63,7 +66,12 @@ export default function AliceInput() {
 
   useEffect(() => {
     if (!showTemplates) return
-    const h = (e) => { if (!e.target.closest('[data-templates]')) setShowTemplates(false) }
+    const h = (e) => {
+      // Закрываем если клик не по кнопке и не по dropdown
+      if (!e.target.closest('[data-templates]') && e.target !== templateBtnRef.current && !templateBtnRef.current?.contains(e.target)) {
+        setShowTemplates(false)
+      }
+    }
     document.addEventListener('mousedown', h)
     return () => document.removeEventListener('mousedown', h)
   }, [showTemplates])
@@ -109,30 +117,19 @@ export default function AliceInput() {
 
         {/* Шаблоны */}
         <div className="relative flex-1" data-templates>
-          <motion.button onClick={() => setShowTemplates(v => !v)} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
+          <motion.button
+            ref={templateBtnRef}
+            onClick={() => {
+              if (!showTemplates && templateBtnRef.current) {
+                const r = templateBtnRef.current.getBoundingClientRect()
+                setDropdownPos({ top: r.bottom + 8, left: r.left })
+              }
+              setShowTemplates(v => !v)
+            }}
+            whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.96 }}
             className={`w-full flex items-center justify-center gap-1.5 py-2.5 rounded-2xl text-xs font-medium ${showTemplates ? 'g-btn-dark' : 'g-btn'}`}>
             <LayoutTemplate size={13}/> Шаблоны
           </motion.button>
-          <AnimatePresence>
-            {showTemplates && (
-              <motion.div
-                initial={{ opacity: 0, y: -6, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                transition={{ duration: 0.15 }}
-                className="absolute top-full mt-2 left-0 z-50 rounded-2xl overflow-hidden"
-                style={{ minWidth: '240px', width: 'max-content', background:'rgba(215,215,220,0.55)', backdropFilter:'blur(48px)', WebkitBackdropFilter:'blur(48px)', border:'1px solid rgba(255,255,255,0.55)', boxShadow:'0 12px 32px rgba(0,0,0,0.10)' }}
-              >
-                {TEMPLATES.map((t, i) => (
-                  <motion.button key={t.label} onClick={() => handleTemplate(t.label)}
-                    initial={{ opacity:0, x:-4 }} animate={{ opacity:1, x:0 }} transition={{ delay: i*0.02 }}
-                    className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-[#1c1c1e] hover:bg-black/6 transition-colors text-left">
-                    <span className="text-sm">{t.emoji}</span> {t.label}
-                  </motion.button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
 
         {/* Волна */}
@@ -143,6 +140,41 @@ export default function AliceInput() {
       </div>
 
       <p className="text-sm text-[#8e8e93] px-0.5">Enter — отправить · Shift+Enter — строка</p>
+
+      {/* Dropdown через portal — рендерится поверх всего */}
+      {createPortal(
+        <AnimatePresence>
+          {showTemplates && (
+            <motion.div
+              initial={{ opacity: 0, y: -6, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.97 }}
+              transition={{ duration: 0.15 }}
+              data-templates
+              className="fixed z-[100] rounded-2xl"
+              style={{
+                top: dropdownPos.top,
+                left: dropdownPos.left,
+                minWidth: '220px',
+                background: 'rgba(225,225,230,0.96)',
+                backdropFilter: 'blur(48px)',
+                WebkitBackdropFilter: 'blur(48px)',
+                border: '1px solid rgba(255,255,255,0.75)',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.16)',
+              }}
+            >
+              {TEMPLATES.map((t, i) => (
+                <motion.button key={t.label} onClick={() => handleTemplate(t.label)}
+                  initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.02 }}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm text-[#1c1c1e] hover:bg-black/6 transition-colors text-left rounded-2xl">
+                  <span className="text-sm">{t.emoji}</span> {t.label}
+                </motion.button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   )
 }
