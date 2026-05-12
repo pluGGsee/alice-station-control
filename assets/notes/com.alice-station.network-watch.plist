@@ -3,24 +3,24 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.alice-station.server</string>
+    <string>com.alice-station.network-watch</string>
 
     <key>ProgramArguments</key>
     <array>
         <string>/Users/mac/.local/bin/alice-station-start.sh</string>
     </array>
 
-    <!-- Запуск при логине -->
-    <key>RunAtLoad</key>
-    <true/>
+    <!-- Запускать при изменении сетевых настроек macOS -->
+    <key>WatchPaths</key>
+    <array>
+        <string>/var/run/resolv.conf</string>
+    </array>
 
-    <!-- Логи -->
     <key>StandardOutPath</key>
     <string>/Users/mac/Library/Logs/alice-station-launchd.log</string>
     <key>StandardErrorPath</key>
     <string>/Users/mac/Library/Logs/alice-station-launchd.log</string>
 
-    <!-- Не перезапускать автоматически — скрипт сам управляет процессом -->
     <key>KeepAlive</key>
     <false/>
 </dict>
