@@ -82,9 +82,7 @@ async def command(payload: TextPayload):
 @app.get("/api/music/current")
 def current_track():
     track = music.get_current_track()
-    if not track:
-        return {"track": None}
-    return track
+    return track if track else {}
 
 @app.get("/api/music/search")
 def search(q: str):
