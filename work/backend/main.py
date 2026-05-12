@@ -81,6 +81,7 @@ async def command(payload: TextPayload):
 
 @app.get("/api/music/current")
 def current_track():
+    # Оставляем для совместимости, но основной источник трека — /api/status
     track = music.get_current_track()
     return track if track else {}
 

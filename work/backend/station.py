@@ -10,10 +10,9 @@ import aiohttp
 
 from config import (
     YANDEX_XTOKEN, SESSION_ID, SESSION_ID2,
-    STATION_IP, STATION_PORT, DEVICE_ID, PLATFORM
+    STATION_IP, STATION_PORT, DEVICE_ID, PLATFORM, YANDEX_TOKEN
 )
 from yandex_session import YandexSession
-from config import YANDEX_TOKEN
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ _glagol_token: str | None = None
 _glagol_token_expires: float = 0
 
 
-async def _get_session() -> YandexSession:
+async def _get_session() -> tuple:
     cookies = {"Session_id": SESSION_ID, "sessionid2": SESSION_ID2}
     http = aiohttp.ClientSession(cookies=cookies)
     session = YandexSession(http, x_token=YANDEX_XTOKEN)
@@ -55,7 +54,32 @@ def _ssl_ctx():
     return ctx
 
 
+async def _connect_and_get_state() -> dict | None:
+    """Подключаемся к колонке и получаем полный state из handshake-ответа."""
+    token = await _get_glagol_token()
+    try:
+        async with aiohttp.ClientSession() as http:
+            ws = await http.ws_connect(
+                f"wss://{STATION_IP}:{STATION_PORT}",
+                ssl=_ssl_ctx(),
+                heartbeat=5,
+            )
+            await ws.send_str(json.dumps({
+                "conversationToken": token,
+                "id": DEVICE_ID,
+                "payload": {"softwareVersion": "1.0"},
+                "sentTime": int(time.time() * 1000),
+            }))
+            msg = await asyncio.wait_for(ws.receive(), timeout=5)
+            await ws.close()
+            return json.loads(msg.data)
+    except Exception as e:
+        logger.error(f"Station connect error: {e}")
+        return None
+
+
 async def _send(payload: dict) -> dict | None:
+    """Отправить команду и получить ответ."""
     token = await _get_glagol_token()
     try:
         async with aiohttp.ClientSession() as http:
@@ -80,8 +104,6 @@ async def _send(payload: dict) -> dict | None:
                 "payload": payload,
                 "sentTime": int(time.time() * 1000),
             }))
-
-            # Читаем ответ
             try:
                 msg = await asyncio.wait_for(ws.receive(), timeout=5)
                 return json.loads(msg.data)
@@ -97,16 +119,37 @@ async def _send(payload: dict) -> dict | None:
 # --- Публичные методы ---
 
 async def get_status() -> dict:
-    result = await _send({"command": "softwareVersion"})
-    if result:
-        state = result.get("state", {})
-        return {
-            "online": True,
-            "playing": state.get("playing", False),
-            "volume": state.get("volume", 0),
-            "aliceState": state.get("aliceState", "IDLE"),
+    """Статус колонки + текущий трек из playerState."""
+    data = await _connect_and_get_state()
+    if not data:
+        return {"online": False, "playing": False, "volume": 0, "aliceState": "IDLE", "track": None}
+
+    state = data.get("state", {})
+    player = state.get("playerState", {})
+    extra = player.get("extra", {})
+
+    # Трек
+    track = None
+    title = player.get("title")
+    if title:
+        cover_uri = extra.get("coverURI")
+        cover_url = ("https://" + cover_uri.replace("%%", "400x400")) if cover_uri else None
+        track = {
+            "title": title,
+            "artist": player.get("subtitle", ""),
+            "cover_url": cover_url,
+            "duration": player.get("duration"),
+            "progress": player.get("progress"),
+            "playlist_type": player.get("playlistType"),
         }
-    return {"online": False, "playing": False, "volume": 0, "aliceState": "IDLE"}
+
+    return {
+        "online": True,
+        "playing": state.get("playing", False),
+        "volume": state.get("volume", 0),
+        "aliceState": state.get("aliceState", "IDLE"),
+        "track": track,
+    }
 
 
 async def send_tts(text: str):
@@ -118,7 +161,6 @@ async def send_command(text: str):
 
 
 async def set_volume(value: int):
-    # value: 0–10 (колонка принимает 0.0–1.0)
     vol = max(0, min(10, value)) / 10
     await _send({"command": "setVolume", "volume": vol})
 
