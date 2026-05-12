@@ -1,109 +1,148 @@
-import { motion } from 'motion/react'
-import { SkipBack, SkipForward, Play, Pause, Volume2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'motion/react'
+import { SkipBack, SkipForward, Play, Pause, Volume2, Music2 } from 'lucide-react'
 import { Slider } from '@/components/ui/slider'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
 export default function PlayerCard({ status, track, onVolumeChange, volumeValue }) {
   const volume = volumeValue ?? Math.round((status?.volume ?? 0) * 10)
+  const isPlaying = status?.playing ?? false
 
   async function handlePlay() {
-    await axios.post('/api/play')
+    try { await axios.post('/api/play') } catch { toast.error('Ошибка') }
   }
   async function handlePause() {
-    await axios.post('/api/pause')
+    try { await axios.post('/api/pause') } catch { toast.error('Ошибка') }
   }
   async function handleNext() {
-    await axios.post('/api/next')
-    toast.success('Следующий трек')
+    try { await axios.post('/api/next'); toast.success('Следующий трек') } catch { toast.error('Ошибка') }
   }
   async function handlePrev() {
-    await axios.post('/api/prev')
-    toast.success('Предыдущий трек')
+    try { await axios.post('/api/prev'); toast.success('Предыдущий трек') } catch { toast.error('Ошибка') }
   }
   async function handleVolume(val) {
     const v = Array.isArray(val) ? val[0] : val
-    await axios.post('/api/volume', { value: v })
-    onVolumeChange?.(v)
+    try { await axios.post('/api/volume', { value: v }); onVolumeChange?.(v) } catch { /* silent */ }
   }
-
-  const isPlaying = status?.playing ?? false
 
   return (
     <motion.div
-      className="bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl rounded-3xl p-6 flex flex-col gap-5"
+      className="bg-white/60 backdrop-blur-xl border border-white/40 shadow-xl rounded-3xl p-5 flex flex-col gap-4"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.4 }}
     >
-      {/* Обложка + инфо о треке */}
-      <div className="flex items-center gap-4">
-        <motion.div
-          className="w-16 h-16 rounded-2xl overflow-hidden bg-purple-100 flex-shrink-0 shadow-md"
-          animate={{ rotate: isPlaying ? [0, 2, -2, 0] : 0 }}
-          transition={{ duration: 4, repeat: isPlaying ? Infinity : 0, ease: 'easeInOut' }}
-        >
-          {track?.cover_url ? (
-            <img src={track.cover_url} alt="cover" className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-2xl">🎵</div>
-          )}
-        </motion.div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-slate-800 truncate text-sm">
-            {track?.title ?? 'Ничего не играет'}
-          </p>
-          <p className="text-slate-500 text-xs truncate mt-0.5">
-            {track?.artist ?? '—'}
-          </p>
-          {track?.album && (
-            <p className="text-slate-400 text-xs truncate mt-0.5">{track.album}</p>
-          )}
+      {/* Трек */}
+      <div className="flex items-center gap-3">
+        {/* Обложка */}
+        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-purple-50 flex-shrink-0 shadow-md">
+          <AnimatePresence mode="wait">
+            {track?.cover_url ? (
+              <motion.img
+                key={track.cover_url}
+                src={track.cover_url}
+                alt="cover"
+                className="w-full h-full object-cover"
+                initial={{ opacity: 0, scale: 1.1 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              />
+            ) : (
+              <motion.div
+                key="placeholder"
+                className="w-full h-full flex items-center justify-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <Music2 size={22} className="text-purple-300" />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+
+        {/* Инфо */}
+        <div className="flex-1 min-w-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={track?.id ?? 'empty'}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.25 }}
+            >
+              <p className="font-semibold text-slate-800 truncate text-sm leading-snug">
+                {track?.title ?? 'Ничего не играет'}
+              </p>
+              <p className="text-slate-400 text-xs truncate mt-0.5">
+                {track?.artist ?? (isPlaying ? 'Воспроизведение...' : '—')}
+              </p>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Индикатор воспроизведения */}
+        {isPlaying && (
+          <div className="flex items-end gap-0.5 h-4 flex-shrink-0">
+            {[0, 1, 2].map(i => (
+              <motion.div
+                key={i}
+                className="w-1 bg-purple-400 rounded-full"
+                animate={{ height: ['4px', '14px', '4px'] }}
+                transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2, ease: 'easeInOut' }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Кнопки управления */}
-      <div className="flex items-center justify-center gap-4">
+      {/* Кнопки */}
+      <div className="flex items-center justify-center gap-3">
         <motion.button
           onClick={handlePrev}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="p-2 rounded-xl text-slate-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+          whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+          className="p-2.5 rounded-xl text-slate-500 hover:bg-purple-50 hover:text-purple-600 transition-colors"
         >
-          <SkipBack size={20} />
+          <SkipBack size={18} />
         </motion.button>
 
         <motion.button
           onClick={isPlaying ? handlePause : handlePlay}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="w-14 h-14 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center shadow-lg shadow-purple-200 transition-colors"
+          whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+          className="w-13 h-13 w-12 h-12 rounded-2xl bg-purple-600 hover:bg-purple-700 text-white flex items-center justify-center shadow-lg shadow-purple-200 transition-colors"
         >
-          {isPlaying ? <Pause size={22} /> : <Play size={22} className="ml-0.5" />}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={isPlaying ? 'pause' : 'play'}
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.7, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+            >
+              {isPlaying ? <Pause size={20} /> : <Play size={20} className="ml-0.5" />}
+            </motion.div>
+          </AnimatePresence>
         </motion.button>
 
         <motion.button
           onClick={handleNext}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="p-2 rounded-xl text-slate-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+          whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
+          className="p-2.5 rounded-xl text-slate-500 hover:bg-purple-50 hover:text-purple-600 transition-colors"
         >
-          <SkipForward size={20} />
+          <SkipForward size={18} />
         </motion.button>
       </div>
 
       {/* Громкость */}
       <div className="flex items-center gap-3">
-        <Volume2 size={16} className="text-slate-400 flex-shrink-0" />
+        <Volume2 size={15} className="text-slate-300 flex-shrink-0" />
         <Slider
-          min={0}
-          max={10}
-          step={1}
+          min={0} max={10} step={1}
           value={[volume]}
           onValueChange={handleVolume}
           className="flex-1"
         />
-        <span className="text-xs text-slate-400 w-4 text-right">{volume}</span>
+        <span className="text-xs text-slate-400 w-4 text-right tabular-nums">{volume}</span>
       </div>
     </motion.div>
   )

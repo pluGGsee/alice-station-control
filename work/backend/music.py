@@ -1,8 +1,11 @@
 import warnings
+import logging
 warnings.filterwarnings("ignore")
 
 from yandex_music import Client
-from config import YANDEX_TOKEN
+from config import YANDEX_TOKEN, DEVICE_ID
+
+logger = logging.getLogger(__name__)
 
 _client: Client | None = None
 
@@ -14,6 +17,12 @@ def _get_client() -> Client:
     return _client
 
 
+def _cover(uri: str | None, size: str = "400x400") -> str | None:
+    if not uri:
+        return None
+    return "https://" + uri.replace("%%", size)
+
+
 def get_current_track() -> dict | None:
     try:
         client = _get_client()
@@ -21,28 +30,39 @@ def get_current_track() -> dict | None:
         if not queues:
             return None
 
-        queue = client.queue(queues[0].id)
+        # Ищем очередь с нашей колонки по device_id
+        # DEVICE_ID колонки: R10G034001ZSQN
+        station_queue = None
+        for q in queues:
+            context = getattr(q, 'context', None)
+            device = getattr(q, 'device', None) or {}
+            dev_id = device.get('device_id', '') if isinstance(device, dict) else getattr(device, 'device_id', '')
+            if DEVICE_ID.lower() in str(dev_id).lower():
+                station_queue = q
+                break
+
+        # Если не нашли очередь колонки — берём первую
+        target = station_queue or queues[0]
+
+        queue = client.queue(target.id)
         track_id = queue.get_current_track()
         if not track_id:
             return None
 
-        tracks = track_id.fetch_track()
-        cover = None
-        if tracks.cover_uri:
-            cover = "https://" + tracks.cover_uri.replace("%%", "400x400")
-
-        artists = ", ".join(a.name for a in (tracks.artists or []))
-        album = tracks.albums[0].title if tracks.albums else None
+        t = track_id.fetch_track()
+        artists = ", ".join(a.name for a in (t.artists or []))
+        album = t.albums[0].title if t.albums else None
 
         return {
-            "id": str(tracks.id),
-            "title": tracks.title,
+            "id": str(t.id),
+            "title": t.title,
             "artist": artists,
             "album": album,
-            "cover_url": cover,
-            "duration_ms": tracks.duration_ms,
+            "cover_url": _cover(t.cover_uri),
+            "duration_ms": t.duration_ms,
         }
-    except Exception:
+    except Exception as e:
+        logger.debug(f"get_current_track error: {e}")
         return None
 
 
@@ -55,19 +75,17 @@ def search_tracks(query: str, limit: int = 10) -> list:
 
         tracks = []
         for t in result.tracks.results[:limit]:
-            cover = None
-            if t.cover_uri:
-                cover = "https://" + t.cover_uri.replace("%%", "200x200")
             artists = ", ".join(a.name for a in (t.artists or []))
             tracks.append({
                 "id": str(t.id),
                 "title": t.title,
                 "artist": artists,
-                "cover_url": cover,
+                "cover_url": _cover(t.cover_uri, "200x200"),
                 "duration_ms": t.duration_ms,
             })
         return tracks
-    except Exception:
+    except Exception as e:
+        logger.debug(f"search_tracks error: {e}")
         return []
 
 
@@ -83,5 +101,6 @@ def get_playlists() -> list:
             }
             for p in (playlists or [])
         ]
-    except Exception:
+    except Exception as e:
+        logger.debug(f"get_playlists error: {e}")
         return []
