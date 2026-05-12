@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Search, Music2, Play } from 'lucide-react'
 import axios from 'axios'
@@ -36,9 +36,13 @@ export default function SearchBlock() {
       <p className="text-xs font-semibold text-[#8e8e93] uppercase tracking-widest">Поиск музыки</p>
 
       <form onSubmit={handleSearch} className="flex gap-2">
-        <input value={query} onChange={e => setQuery(e.target.value)}
+        <motion.input
+          value={query} onChange={e => setQuery(e.target.value)}
           placeholder="Название или исполнитель..."
-          className="g-input flex-1 rounded-2xl px-4 py-2.5 text-sm" />
+          className="g-input flex-1 rounded-2xl px-4 py-2.5 text-sm"
+          whileFocus={{ scale: 1.01 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+        />
         <motion.button type="submit" disabled={loading || query.trim().length < 2}
           whileHover={{ scale:1.04 }} whileTap={{ scale:0.96 }}
           className="g-btn-dark px-4 py-2.5 rounded-2xl disabled:opacity-40 flex items-center justify-center">
@@ -52,10 +56,15 @@ export default function SearchBlock() {
       <AnimatePresence>
         {results.length > 0 && (
           <motion.div className="flex flex-col gap-0.5 max-h-56 overflow-y-auto"
-            initial={{ opacity:0, height:0 }} animate={{ opacity:1, height:'auto' }} exit={{ opacity:0, height:0 }}>
+            initial={{ opacity:0, height:0 }} animate={{ opacity:1, height:'auto' }} exit={{ opacity:0, height:0 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}>
             {results.map((track, i) => (
               <motion.button key={track.id} onClick={() => handlePlay(track)}
-                initial={{ opacity:0, x:-6 }} animate={{ opacity:1, x:0 }} transition={{ delay: i*0.03 }}
+                initial={{ opacity:0, x:-10, scale: 0.97 }}
+                animate={{ opacity:1, x:0, scale: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 28, delay: i * 0.04 }}
+                whileHover={{ x: 4 }}
+                whileTap={{ scale: 0.97 }}
                 className="g-row w-full flex items-center gap-3 p-2 rounded-2xl text-left group transition-colors">
                 <div className="w-9 h-9 rounded-xl overflow-hidden bg-black/8 flex-shrink-0 relative">
                   {track.cover_url

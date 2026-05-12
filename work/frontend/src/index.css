@@ -102,6 +102,97 @@ body {
   background: rgba(0, 0, 0, 0.05);
 }
 
+/* ===== Кастомные анимации ===== */
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes glass-breathe {
+  0%, 100% { box-shadow: 0 4px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.55); }
+  50%       { box-shadow: 0 8px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.70); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-4px); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 1; }
+}
+
+@keyframes border-glow {
+  0%, 100% { border-color: rgba(255,255,255,0.50); }
+  50%       { border-color: rgba(255,255,255,0.80); }
+}
+
+/* Shimmer skeleton */
+.g-skeleton {
+  background: linear-gradient(90deg,
+    rgba(200,200,204,0.4) 25%,
+    rgba(220,220,224,0.7) 50%,
+    rgba(200,200,204,0.4) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* Панель с мягким дыханием */
+.g-panel-breathe {
+  animation: glass-breathe 4s ease-in-out infinite;
+}
+
+/* Floating эффект */
+.g-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Glow на границе при hover */
+.g-panel {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+}
+.g-panel:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.70);
+  border-color: rgba(255,255,255,0.65);
+}
+
+/* Кнопки — плавный transition */
+.g-btn {
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.g-btn-dark {
+  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.20);
+}
+.g-btn-dark:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.28);
+  transform: translateY(-1px);
+}
+.g-btn-dark:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.20);
+}
+
+/* Input focus — элегантный glow */
+.g-input:focus {
+  outline: none;
+  background: rgba(225, 225, 230, 0.65);
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.20), 0 2px 12px rgba(0,0,0,0.08);
+  transform: none;
+}
+
+/* Row hover — slide-in эффект */
+.g-row {
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.g-row:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', sans-serif;

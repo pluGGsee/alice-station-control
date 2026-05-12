@@ -60,18 +60,32 @@ export default function PlaylistPanel() {
 
         {loading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-14 rounded-2xl bg-black/6 animate-pulse" />
+            <motion.div key={i}
+              className="h-20 rounded-2xl g-skeleton"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              transition={{ delay: i * 0.08 }}
+            />
           ))
         ) : playlists.length === 0 ? (
           <p className="text-sm text-[#6e6e73] text-center py-3">Нет плейлистов</p>
         ) : (
           playlists.map((pl, i) => (
             <motion.div key={pl.id}
-              initial={{ opacity:0, x:8 }} animate={{ opacity:1, x:0 }} transition={{ delay: i*0.06 }}
+              initial={{ opacity: 0, x: 12, scale: 0.97 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 280, damping: 28, delay: i * 0.07 }}
               onClick={() => setSelected(pl)}
-              whileHover={{ y: -2 }}
-              className="g-row flex items-center gap-4 px-3 py-3 rounded-2xl cursor-pointer transition-all group">
-              <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-black/8 flex-shrink-0 shadow-sm">
+              whileHover={{ x: 4, scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              transition2={{ type: 'spring', stiffness: 400, damping: 25 }}
+              className="g-row flex items-center gap-4 px-3 py-3 rounded-2xl cursor-pointer group"
+              style={{ willChange: 'transform' }}
+            >
+              <motion.div
+                className="relative w-14 h-14 rounded-2xl overflow-hidden bg-black/8 flex-shrink-0 shadow-sm"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              >
                 {cover(pl) ? (
                   <img src={cover(pl)} alt="" className="w-full h-full object-cover" />
                 ) : (
@@ -79,11 +93,15 @@ export default function PlaylistPanel() {
                     <Music2 size={22} className="text-[#8e8e93]" />
                   </div>
                 )}
-                <button onClick={(e) => onCoverClick(e, pl.id)}
-                  className="absolute inset-0 bg-black/35 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+                <motion.button
+                  onClick={(e) => onCoverClick(e, pl.id)}
+                  initial={{ opacity: 0 }}
+                  whileHover={{ opacity: 1 }}
+                  className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-2xl"
+                >
                   <Pencil size={13} className="text-white" />
-                </button>
-              </div>
+                </motion.button>
+              </motion.div>
               <div className="flex-1 min-w-0">
                 <p className="text-base font-semibold text-[#1c1c1e] truncate">{pl.title}</p>
                 <p className="text-sm text-[#555558] mt-0.5">{pl.track_count} треков</p>
