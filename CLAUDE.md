@@ -4,73 +4,90 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Local web service for controlling a Yandex Station Midi smart speaker from Mac/Windows via browser. Two-part stack: Python backend + React frontend, all running on the local network.
+Local web service for controlling a Yandex Station Midi (pink, `TP-Link_76DF_5G` home network) from Mac/Windows via browser. Python backend + React frontend on local network. **MVP is complete.**
 
 ## Commands
 
 ### Backend
 ```bash
-cd work/backend
-source venv/bin/activate          # activate Python 3.14 venv
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload   # dev server
-uvicorn main:app --host 0.0.0.0 --port 8000             # production
+cd work/backend && source venv/bin/activate
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload   # dev
+uvicorn main:app --host 0.0.0.0 --port 8000             # prod
 ```
 
 ### Frontend
 ```bash
 cd work/frontend
-npm run dev        # dev server on :5174 (proxies /api → localhost:8000)
-npm run build      # production build → dist/
-npm run lint       # ESLint check
+npm run dev      # :5174, proxies /api → localhost:8000
+npm run build    # → dist/
+npm run lint
 ```
 
-### Re-auth (when tokens expire)
+### Autostart (launchd — already installed)
+```bash
+# Starts automatically when on home network 192.168.0.x
+# To control manually:
+launchctl load   ~/Library/LaunchAgents/com.alice-station.server.plist
+launchctl unload ~/Library/LaunchAgents/com.alice-station.server.plist
+tail -f ~/Library/Logs/alice-station.log
+# Script: ~/.local/bin/alice-station-start.sh
+```
+
+### Re-auth (tokens expire in ~weeks)
 ```bash
 cd work/backend && source venv/bin/activate
-python3 get_token.py    # get new YANDEX_TOKEN (yandex-music OAuth)
-# For YANDEX_XTOKEN: open in browser:
-# https://oauth.yandex.ru/authorize?response_type=token&client_id=23cabbbdc6cd418abb4b39c32c41195d
-# Copy access_token from redirect URL
-# Update SESSION_ID / SESSION_ID2 from browser devtools → Application → Cookies → yandex.ru
+python3 get_token.py   # new YANDEX_TOKEN
+# YANDEX_XTOKEN: browser → https://oauth.yandex.ru/authorize?response_type=token&client_id=23cabbbdc6cd418abb4b39c32c41195d → copy access_token from URL
+# SESSION_ID / SESSION_ID2: browser devtools → Application → Cookies → yandex.ru
 ```
 
 ## Architecture
 
 ### Backend (`work/backend/`)
 
-**`config.py`** — all secrets and device constants. In `.gitignore`. Contains:
-- `YANDEX_TOKEN` — yandex-music OAuth token
-- `YANDEX_XTOKEN` — Yandex Passport x-token (for Glagol API)
-- `SESSION_ID` / `SESSION_ID2` — browser cookies for YandexSession
-- `STATION_IP=192.168.0.102`, `STATION_PORT=1961`, `DEVICE_ID=R10G034001ZSQN`, `PLATFORM=cucumber`
+**`config.py`** — gitignored. Contains: `YANDEX_TOKEN`, `YANDEX_XTOKEN`, `SESSION_ID`, `SESSION_ID2`, `STATION_IP=192.168.0.102`, `STATION_PORT=1961`, `DEVICE_ID=R10G034001ZSQN`, `PLATFORM=cucumber`.
 
-**`station.py`** — controls the physical speaker via Glagol WebSocket (`wss://192.168.0.102:1961`). Flow: get JWT token from `https://quasar.yandex.net/glagol/token` → WebSocket handshake → send command. Token is cached 1 hour. `get_status()` returns current track from `playerState` in the handshake response (not a separate request).
+**`station.py`** — Glagol WebSocket controller. Keeps a **persistent connection** (`_ws` global) — reuses it for all commands (status/volume ~20ms, was ~1000ms). `asyncio.Lock` serializes concurrent commands. `get_status()` reads `playerState` from handshake response — contains current track title/artist/cover. JWT token cached 1h in `_glagol_token`.
 
-**`music.py`** — wraps `yandex-music` library. `get_playlist_tracks()` uses `client.tracks(batch_ids)` for a single bulk request instead of per-track fetches (critical for performance — 30s → 5s).
+**`music.py`** — `yandex-music` wrapper. `get_playlist_tracks()` uses `client.tracks(batch_ids)` bulk request — one API call for 50 tracks (was 30s per-track, now 5s). `_reset_client()` called on auth errors.
 
-**`main.py`** — FastAPI app. Mounts `/static/` for user-uploaded playlist covers stored in `static/covers/`. CORS is open (`allow_origins=["*"]`).
+**`main.py`** — FastAPI. `/static/` serves user-uploaded playlist covers. CORS open.
 
-**`yandex_glagol.py`, `yandex_quasar.py`, `yandex_session.py`** — copied from [AlexxIT/YandexStation](https://github.com/AlexxIT/YandexStation) repo (v3.20.3). Not a pip package. Relative imports were patched to absolute. `YandexSession` requires `aiohttp.ClientSession` + browser cookies + x-token to authenticate.
+**`yandex_glagol.py`, `yandex_quasar.py`, `yandex_session.py`** — copied from AlexxIT/YandexStation v3.20.3. Not a pip package. Relative imports patched to absolute. Auth flow: `Session_id` + `Session_id2` cookies + `YANDEX_XTOKEN` → `YandexSession` → Glagol JWT.
 
 ### Frontend (`work/frontend/src/`)
 
-**Two-column layout** (`App.jsx`): left column (AliceInput + PlayerCard + SearchBlock), right column (QuickCommands + PlaylistPanel). Both `flex-1`.
+**Layout** (`App.jsx`): two equal `flex-1` columns. Left: `AliceInput` + `PlayerCard` + `SearchBlock`. Right: `QuickCommands` + `PlaylistPanel`. Status polled every 5s from `/api/status`.
 
-**State**: single `status` object polled every 5s from `GET /api/status`. Contains `{ online, playing, volume, aliceState, track }`. Track info comes directly from the speaker's Glagol `playerState`, not from yandex-music queues (queues only work when music is started from the app, not voice commands).
+**Design system** (`index.css`): grey liquid glass. Classes: `g-panel`, `g-btn`, `g-btn-dark`, `g-input`, `g-header`, `g-row`, `g-skeleton`. Background `#b8b8bc`. Panels: `rgba(210,210,215,0.35) + blur(48px)`. Font: Plus Jakarta Sans.
 
-**Design system** (`index.css`): grey liquid glass. CSS classes `g-panel`, `g-btn`, `g-btn-dark`, `g-input`, `g-header`, `g-row`. Background `#b8b8bc`. Panels: `rgba(210,210,215,0.35)` + `blur(48px)`. Font: Plus Jakarta Sans.
+**Key components:**
+- `AliceInput` — textarea with typewriter placeholder (`useTypewriter` hook, `PLACEHOLDERS` array at module level). Templates dropdown via `createPortal(document.body)` (escapes overflow). Web Speech API mic with cleanup on unmount.
+- `PlayerCard` — centered cover with ambient glow (blurred bg image behind cover when playing). Persistent WebSocket makes volume/play instant.
+- `PlaylistModal` — `createPortal(document.body)`. Paginated load: `offset + limit=50`. File input created dynamically via `document.createElement('input')` — no DOM element.
+- `QuickCommands` — light modes only: лава-лампа, свеча, ночник + colors. All via `sendText`.
 
-**Dropdowns / modals that escape overflow**: `PlaylistModal` and the templates dropdown in `AliceInput` both use `createPortal(document.body)` — required because parent containers have `overflow-y-auto`.
+**Shared utils** (`src/lib/utils.js`): `cn()` for Tailwind merging, `msToMin()` for track duration formatting.
 
-**Playlist covers**: stored in `localStorage` as base64 fallback, or uploaded to `/api/music/playlist-cover` → served from `/static/covers/{kind}.{ext}`. File input is created dynamically (`document.createElement('input')`) — no DOM element to avoid Playwright file chooser interception.
+**shadcn/ui** (`src/components/ui/`): uses `@base-ui/react`. Slider: `onValueChange` (not `onValueCommit`). ESLint `react-refresh/only-export-components` disabled for `ui/**`.
 
-**shadcn/ui** components (`src/components/ui/`) use `@base-ui/react` under the hood. Slider uses `onValueChange` (not `onValueCommit`). ESLint rule `react-refresh/only-export-components` is disabled for `src/components/ui/**`.
+**Animations**: `motion/react` (ex framer-motion). Stagger entrance on page load (`containerVariants` + `panelVariants` in App.jsx). Spring buttons. `g-skeleton` shimmer for loading states.
 
 ## Key Constraints
 
-- **Tokens expire**: `SESSION_ID`/`SESSION_ID2` browser cookies expire in ~weeks. When `401` errors appear on `/api/status`, update them from browser devtools.
-- **Glagol JWT** refreshes automatically every hour (cached in `station._glagol_token`).
-- **`sendText` command** is used for everything — TTS, voice commands, and light modes. There's no separate "execute command" API.
-- **Light modes** supported by Station Midi: `включи лава-лампу`, `включи режим свеча`, `включи ночник` + colors via voice.
-- **Volume** is `0.0–1.0` in Glagol protocol, but `/api/volume` accepts `0–10` and converts.
-- **Playlist tracks** are loaded with `offset` + `limit=50` pagination via `client.tracks(batch_ids)`.
+- **Tokens expire ~weeks**: `SESSION_ID`/`SESSION_ID2` → 401 on `/api/status` = time to refresh from browser devtools.
+- **Glagol JWT** auto-refreshes every hour.
+- **`sendText`** is the only command API — used for TTS, voice commands, light modes, track control. ~1s response is the station's processing time, not ours.
+- **Track info from playerState only** — yandex-music queues are empty when music started via voice. Always use `/api/status` → `track`, not `/api/music/current`.
+- **Volume**: Glagol uses `0.0–1.0`, API accepts `0–10`.
+- **Light modes on Midi**: `включи лава-лампу`, `включи режим свеча`, `включи ночник` + any color by name.
+- **Playlist covers**: no API — user uploads via `/api/music/playlist-cover`, stored in `static/covers/`, fallback to `localStorage`.
+
+## What's Left for v2
+
+- Schedules / timers
+- Smart home control (Zigbee devices via Alice)
+- Command history log
+- Dark theme toggle
+- Docker for Windows deploy
+- Production build (npm run build served as FastAPI static)
