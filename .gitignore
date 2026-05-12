@@ -1,0 +1,15 @@
+# Токен и секреты — никогда не коммитим
+work/backend/config.py
+
+# Python
+work/backend/venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Node
+work/frontend/node_modules/
+work/frontend/dist/
+
+# OS
+.DS_Store
