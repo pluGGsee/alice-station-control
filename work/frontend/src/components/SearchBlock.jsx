@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { Search, Music2, Play } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import { msToMin } from '@/lib/utils'
 
 export default function SearchBlock() {
   const [query, setQuery] = useState('')
@@ -23,12 +24,6 @@ export default function SearchBlock() {
   async function handlePlay(track) {
     try { await axios.post('/api/command', { text: `включи ${track.title} ${track.artist}` }); toast.success(`▶ ${track.title}`) }
     catch { toast.error('Ошибка') }
-  }
-
-  function msToMin(ms) {
-    if (!ms) return ''
-    const s = Math.floor(ms / 1000)
-    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
   }
 
   return (

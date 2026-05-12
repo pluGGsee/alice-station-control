@@ -9,8 +9,7 @@ export default function PlayerCard({ status, track, onVolumeChange, volumeValue 
   const isPlaying = status?.playing ?? false
 
   async function post(url) { try { await axios.post(url) } catch { toast.error('Ошибка') } }
-  async function handleVolume(val) {
-    const v = Array.isArray(val) ? val[0] : val
+  async function handleVolume([v]) {
     try { await axios.post('/api/volume', { value: v }); onVolumeChange?.(v) } catch {}
   }
 

@@ -4,12 +4,7 @@ import { motion } from 'motion/react'
 import { X, Music2, Play, ChevronDown } from 'lucide-react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
-
-function msToMin(ms) {
-  if (!ms) return ''
-  const s = Math.floor(ms / 1000)
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
-}
+import { msToMin } from '@/lib/utils'
 
 export default function PlaylistModal({ playlist, onClose }) {
   const [tracks, setTracks] = useState([])

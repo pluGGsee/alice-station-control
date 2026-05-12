@@ -18,14 +18,16 @@ logger = logging.getLogger(__name__)
 
 _glagol_token: str | None = None
 _glagol_token_expires: float = 0
+_send_lock = asyncio.Lock()
+_http_session: aiohttp.ClientSession | None = None
 
 
-async def _get_session() -> tuple:
-    cookies = {"Session_id": SESSION_ID, "sessionid2": SESSION_ID2}
-    http = aiohttp.ClientSession(cookies=cookies)
-    session = YandexSession(http, x_token=YANDEX_XTOKEN)
-    session.music_token = YANDEX_TOKEN
-    return session, http
+def _get_http_session() -> aiohttp.ClientSession:
+    global _http_session
+    if _http_session is None or _http_session.closed:
+        cookies = {"Session_id": SESSION_ID, "sessionid2": SESSION_ID2}
+        _http_session = aiohttp.ClientSession(cookies=cookies)
+    return _http_session
 
 
 async def _get_glagol_token() -> str:
@@ -33,18 +35,17 @@ async def _get_glagol_token() -> str:
     if _glagol_token and time.time() < _glagol_token_expires:
         return _glagol_token
 
-    session, http = await _get_session()
-    try:
-        r = await session.request_glagol(
-            f"https://quasar.yandex.net/glagol/token"
-            f"?device_id={DEVICE_ID}&platform={PLATFORM}"
-        )
-        data = await r.json()
-        _glagol_token = data["token"]
-        _glagol_token_expires = time.time() + 3600
-        return _glagol_token
-    finally:
-        await http.close()
+    http = _get_http_session()
+    session = YandexSession(http, x_token=YANDEX_XTOKEN)
+    session.music_token = YANDEX_TOKEN
+    r = await session.request_glagol(
+        f"https://quasar.yandex.net/glagol/token"
+        f"?device_id={DEVICE_ID}&platform={PLATFORM}"
+    )
+    data = await r.json()
+    _glagol_token = data["token"]
+    _glagol_token_expires = time.time() + 3600
+    return _glagol_token
 
 
 def _ssl_ctx():
@@ -54,72 +55,64 @@ def _ssl_ctx():
     return ctx
 
 
+def _make_msg(token: str, payload: dict) -> str:
+    return json.dumps({
+        "conversationToken": token,
+        "id": DEVICE_ID,
+        "payload": payload,
+        "sentTime": int(time.time() * 1000),
+    })
+
+
 async def _connect_and_get_state() -> dict | None:
-    """Подключаемся к колонке и получаем полный state из handshake-ответа."""
     token = await _get_glagol_token()
+    ws = None
     try:
         async with aiohttp.ClientSession() as http:
             ws = await http.ws_connect(
                 f"wss://{STATION_IP}:{STATION_PORT}",
-                ssl=_ssl_ctx(),
-                heartbeat=5,
+                ssl=_ssl_ctx(), heartbeat=5,
             )
-            await ws.send_str(json.dumps({
-                "conversationToken": token,
-                "id": DEVICE_ID,
-                "payload": {"softwareVersion": "1.0"},
-                "sentTime": int(time.time() * 1000),
-            }))
+            await ws.send_str(_make_msg(token, {"softwareVersion": "1.0"}))
             msg = await asyncio.wait_for(ws.receive(), timeout=5)
-            await ws.close()
             return json.loads(msg.data)
     except Exception as e:
         logger.error(f"Station connect error: {e}")
         return None
+    finally:
+        if ws and not ws.closed:
+            await ws.close()
 
 
 async def _send(payload: dict) -> dict | None:
-    """Отправить команду и получить ответ."""
-    token = await _get_glagol_token()
-    try:
-        async with aiohttp.ClientSession() as http:
-            ws = await http.ws_connect(
-                f"wss://{STATION_IP}:{STATION_PORT}",
-                ssl=_ssl_ctx(),
-                heartbeat=5,
-            )
-            # Handshake
-            await ws.send_str(json.dumps({
-                "conversationToken": token,
-                "id": DEVICE_ID,
-                "payload": {"softwareVersion": "1.0"},
-                "sentTime": int(time.time() * 1000),
-            }))
-            await asyncio.wait_for(ws.receive(), timeout=5)
-
-            # Команда
-            await ws.send_str(json.dumps({
-                "conversationToken": token,
-                "id": DEVICE_ID,
-                "payload": payload,
-                "sentTime": int(time.time() * 1000),
-            }))
-            try:
-                msg = await asyncio.wait_for(ws.receive(), timeout=5)
-                return json.loads(msg.data)
-            except asyncio.TimeoutError:
-                return None
-            finally:
+    async with _send_lock:
+        token = await _get_glagol_token()
+        ws = None
+        try:
+            async with aiohttp.ClientSession() as http:
+                ws = await http.ws_connect(
+                    f"wss://{STATION_IP}:{STATION_PORT}",
+                    ssl=_ssl_ctx(), heartbeat=5,
+                )
+                await ws.send_str(_make_msg(token, {"softwareVersion": "1.0"}))
+                await asyncio.wait_for(ws.receive(), timeout=5)
+                await ws.send_str(_make_msg(token, payload))
+                try:
+                    msg = await asyncio.wait_for(ws.receive(), timeout=5)
+                    return json.loads(msg.data)
+                except asyncio.TimeoutError:
+                    return None
+        except Exception as e:
+            logger.error(f"Station send error: {e}")
+            return None
+        finally:
+            if ws and not ws.closed:
                 await ws.close()
-    except Exception as e:
-        logger.error(f"Station send error: {e}")
-        return None
 
 
 # --- Публичные методы ---
 
 async def get_status() -> dict:
-    """Статус колонки + текущий трек из playerState."""
     data = await _connect_and_get_state()
     if not data:
         return {"online": False, "playing": False, "volume": 0, "aliceState": "IDLE", "track": None}
@@ -128,7 +121,6 @@ async def get_status() -> dict:
     player = state.get("playerState", {})
     extra = player.get("extra", {})
 
-    # Трек
     track = None
     title = player.get("title")
     if title:

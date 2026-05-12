@@ -73,6 +73,16 @@ export default function AliceInput() {
   const speechSupported = typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
 
+  // Cleanup SpeechRecognition при размонтировании компонента
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop()
+        recognitionRef.current = null
+      }
+    }
+  }, [])
+
   async function handleSend(cmd) {
     const value = (cmd || text).trim()
     if (!value) return

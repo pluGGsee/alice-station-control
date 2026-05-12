@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion } from 'motion/react'
 import { Toaster } from 'react-hot-toast'
 import axios from 'axios'
@@ -50,6 +50,10 @@ export default function App() {
   }, [fetchStatus])
 
   const volumeValue = Math.round((status.volume ?? 0) * 10)
+
+  const handleVolumeChange = useCallback((v) => {
+    setStatus(s => ({ ...s, volume: v / 10 }))
+  }, [])
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#b8b8bc' }}>
@@ -110,7 +114,7 @@ export default function App() {
               status={status}
               track={status.track}
               volumeValue={volumeValue}
-              onVolumeChange={(v) => setStatus(s => ({ ...s, volume: v / 10 }))}
+              onVolumeChange={handleVolumeChange}
             />
           </motion.div>
           <motion.div variants={panelVariants} className="flex-shrink-0">
