@@ -16,13 +16,57 @@ const TEMPLATES = [
   { label: 'Сколько времени?', emoji: '🕐' },
 ]
 
+const PLACEHOLDERS = [
+  'Напиши команду Алисе...',
+  'Включи лава-лампу...',
+  'Расскажи анекдот...',
+  'Какая погода сегодня?',
+  'Включи мою волну...',
+  'Поставь будильник на 8 утра...',
+  'Сколько сейчас времени?',
+]
+
+function useTypewriter(texts, { typingSpeed = 60, deleteSpeed = 30, pauseTime = 2200 } = {}) {
+  const [displayed, setDisplayed] = useState('')
+  const [idx, setIdx] = useState(0)
+  const [phase, setPhase] = useState('typing') // typing | pause | deleting
+
+  useEffect(() => {
+    const current = texts[idx]
+    let timeout
+
+    if (phase === 'typing') {
+      if (displayed.length < current.length) {
+        timeout = setTimeout(() => setDisplayed(current.slice(0, displayed.length + 1)), typingSpeed)
+      } else {
+        timeout = setTimeout(() => setPhase('pause'), pauseTime)
+      }
+    } else if (phase === 'pause') {
+      setPhase('deleting')
+    } else if (phase === 'deleting') {
+      if (displayed.length > 0) {
+        timeout = setTimeout(() => setDisplayed(displayed.slice(0, -1)), deleteSpeed)
+      } else {
+        setIdx(i => (i + 1) % texts.length)
+        setPhase('typing')
+      }
+    }
+
+    return () => clearTimeout(timeout)
+  }, [displayed, phase, idx, texts, typingSpeed, deleteSpeed, pauseTime])
+
+  return displayed
+}
+
 export default function AliceInput() {
   const [text, setText] = useState('')
+  const [focused, setFocused] = useState(false)
   const [listening, setListening] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
   const [loading, setLoading] = useState(false)
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 })
   const recognitionRef = useRef(null)
+  const typedPlaceholder = useTypewriter(PLACEHOLDERS, { typingSpeed: 55, deleteSpeed: 25, pauseTime: 2000 })
   const textareaRef = useRef(null)
   const templateBtnRef = useRef(null)
 
@@ -81,12 +125,39 @@ export default function AliceInput() {
       <p className="text-xs font-semibold text-[#8e8e93] uppercase tracking-widest">Алиса</p>
 
       <div className="relative">
+        {/* Анимированный placeholder — виден только когда поле пустое и не в фокусе */}
+        <AnimatePresence>
+          {!text && !focused && (
+            <motion.div
+              className="absolute top-0 left-0 right-0 px-4 pr-11 pointer-events-none select-none"
+              style={{ paddingTop: '8px', paddingBottom: '8px' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <span className="text-sm leading-relaxed" style={{ color: 'rgba(60,60,67,0.45)' }}>
+                {typedPlaceholder}
+              </span>
+              {/* Мигающий курсор */}
+              <motion.span
+                className="inline-block w-0.5 h-4 ml-0.5 align-middle rounded-full"
+                style={{ background: 'rgba(60,60,67,0.45)', marginBottom: '1px' }}
+                animate={{ opacity: [1, 0, 1] }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'steps(1)' }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <textarea
           ref={textareaRef}
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={handleKey}
-          placeholder="Напиши или надиктуй команду..."
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder=""
           rows={5}
           style={{ paddingTop: '8px', paddingBottom: '8px' }}
           className="g-input w-full resize-none rounded-2xl px-4 pr-11 text-sm leading-relaxed"
