@@ -17,7 +17,7 @@ from config import YANDEX_TOKEN
 
 logger = logging.getLogger(__name__)
 
-_glagol_token: "str | None" = None
+_glagol_token: str | None = None
 _glagol_token_expires: float = 0
 
 
@@ -55,7 +55,7 @@ def _ssl_ctx():
     return ctx
 
 
-async def _send(payload: dict) -> "dict | None":
+async def _send(payload: dict) -> dict | None:
     token = await _get_glagol_token()
     try:
         async with aiohttp.ClientSession() as http:

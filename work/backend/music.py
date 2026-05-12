@@ -4,7 +4,7 @@ warnings.filterwarnings("ignore")
 from yandex_music import Client
 from config import YANDEX_TOKEN
 
-_client: "Client | None" = None
+_client: Client | None = None
 
 
 def _get_client() -> Client:
@@ -14,7 +14,7 @@ def _get_client() -> Client:
     return _client
 
 
-def get_current_track() -> "dict | None":
+def get_current_track() -> dict | None:
     try:
         client = _get_client()
         queues = client.queues_list()
