@@ -2,19 +2,22 @@
 
 > Локальный веб-сервис для управления **Яндекс Станцией Миди** с любого устройства в домашней сети — без телефона и голосовых команд.
 
-![UI Preview](assets/references/референс%20дизайна.jpg)
+![Main UI](assets/screenshots/main.png)
 
 ---
 
 ## ✨ Возможности
 
-- 🎵 **Плеер** — play/pause, следующий/предыдущий трек, обложка, исполнитель
-- 🔊 **Громкость** — управление ползунком
+- 🎵 **Плеер** — play/pause, следующий/предыдущий трек, обложка с ambient glow
+- 🔊 **Громкость** — управление ползунком в реальном времени (~20ms отклик)
 - 🎤 **Голосовой ввод** — диктовка команд через микрофон (Web Speech API)
 - 💬 **Текстовые команды** — отправить любую команду Алисе
 - 📋 **Шаблоны** — быстрые команды одним кликом
 - 💡 **Подсветка** — лава-лампа, свеча, ночник, цвета (официальные режимы Миди)
 - 🎵 **Плейлисты** — просмотр, поиск треков, запуск
+
+![Playlist Modal](assets/screenshots/playlist.png)
+
 - 🔍 **Поиск музыки** — поиск и запуск треков с Яндекс Музыки
 - 🚀 **Автозапуск** — сервер стартует автоматически при подключении к домашней сети
 
@@ -26,10 +29,11 @@
 - Python 3.14 + FastAPI + uvicorn
 - [yandex-music](https://github.com/MarshalX/yandex-music-api) — плейлисты, поиск, треки
 - [YandexStation](https://github.com/AlexxIT/YandexStation) — управление колонкой через Glagol WebSocket
+- Persistent WebSocket соединение — отклик ~20ms вместо ~1000ms
 
 **Фронтенд**
 - React 19 + Vite 8 + Tailwind CSS v4
-- [Motion](https://motion.dev/) — анимации
+- [Motion](https://motion.dev/) — анимации (stagger, spring, ambient glow)
 - [shadcn/ui](https://ui.shadcn.com/) + Lucide React
 - Дизайн: серый liquid glass, шрифт Plus Jakarta Sans
 
@@ -131,7 +135,7 @@ cp assets/notes/com.alice-station.network-watch.plist ~/Library/LaunchAgents/
 cp assets/notes/start-server.sh ~/.local/bin/alice-station-start.sh
 chmod +x ~/.local/bin/alice-station-start.sh
 
-# Редактируй HOME_SUBNET в start-server.sh под свою подсеть
+# Отредактируй HOME_SUBNET в start-server.sh под свою подсеть
 
 launchctl load ~/Library/LaunchAgents/com.alice-station.server.plist
 launchctl load ~/Library/LaunchAgents/com.alice-station.network-watch.plist
@@ -139,6 +143,8 @@ launchctl load ~/Library/LaunchAgents/com.alice-station.network-watch.plist
 # Логи
 tail -f ~/Library/Logs/alice-station.log
 ```
+
+Нагрузка в idle: **~0.1% CPU, ~30 МБ RAM**.
 
 ---
 
@@ -158,9 +164,9 @@ alice-station-control/
 │           ├── App.jsx
 │           └── components/
 ├── assets/
+│   ├── screenshots/      # Скриншоты UI
 │   ├── references/       # Референсы дизайна
 │   └── notes/            # Скрипты автозапуска
-├── final/                # Чистовые снимки
 ├── CLAUDE.md             # Инструкции для Claude Code
 └── README.md
 ```
@@ -169,8 +175,8 @@ alice-station-control/
 
 ## 🔑 Важно
 
-- `config.py` добавлен в `.gitignore` — **никогда не коммить токены**
-- Токены протухают примерно раз в несколько недель — обновляй `SESSION_ID` из браузера
+- `config.py` в `.gitignore` — **никогда не коммить токены**
+- Токены протухают раз в несколько недель — обновляй `SESSION_ID` из браузера при ошибках 401
 - Сервис работает только в локальной сети — снаружи недоступен
 
 ---
