@@ -103,8 +103,8 @@ def playlists():
     return {"playlists": music.get_playlists()}
 
 @app.get("/api/music/playlist-tracks")
-def playlist_tracks(kind: int):
-    return {"tracks": music.get_playlist_tracks(kind)}
+def playlist_tracks(kind: int, offset: int = 0, limit: int = 50):
+    return {"tracks": music.get_playlist_tracks(kind, offset=offset, limit=limit)}
 
 @app.post("/api/music/play-track")
 async def play_track(payload: TrackPayload):

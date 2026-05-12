@@ -108,7 +108,7 @@ def get_playlists() -> list:
         return []
 
 
-def get_playlist_tracks(kind: int, limit: int = 50) -> list:
+def get_playlist_tracks(kind: int, offset: int = 0, limit: int = 50) -> list:
     """Загружает первые N треков плейлиста одним пакетным запросом."""
     try:
         client = _get_client()
@@ -122,7 +122,7 @@ def get_playlist_tracks(kind: int, limit: int = 50) -> list:
             for t in playlist.tracks[:limit]
         ]
         # Альтернативный способ — через TrackShort.fetch_track батчем
-        short_tracks = playlist.tracks[:limit]
+        short_tracks = playlist.tracks[offset:offset + limit]
         track_id_list = [t.id for t in short_tracks]
         album_id_list = [getattr(t, 'album_id', None) for t in short_tracks]
 

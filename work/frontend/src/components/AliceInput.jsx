@@ -115,12 +115,12 @@ export default function AliceInput() {
           <AnimatePresence>
             {showTemplates && (
               <motion.div
-                initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                initial={{ opacity: 0, y: -6, scale: 0.97 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                exit={{ opacity: 0, y: -6, scale: 0.97 }}
                 transition={{ duration: 0.15 }}
-                className="absolute bottom-full mb-2 left-0 right-0 z-50 rounded-2xl overflow-hidden"
-                style={{ background:'rgba(225,225,228,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(255,255,255,0.7)', boxShadow:'0 12px 32px rgba(0,0,0,0.14)' }}
+                className="absolute top-full mt-2 left-0 z-50 rounded-2xl overflow-hidden"
+                style={{ minWidth: '240px', width: 'max-content', background:'rgba(225,225,228,0.96)', backdropFilter:'blur(20px)', border:'1px solid rgba(255,255,255,0.7)', boxShadow:'0 12px 32px rgba(0,0,0,0.14)' }}
               >
                 {TEMPLATES.map((t, i) => (
                   <motion.button key={t.label} onClick={() => handleTemplate(t.label)}

@@ -49,7 +49,8 @@ export default function PlaylistPanel() {
         reader.readAsDataURL(file)
       }
     }
-    input.click()
+    // setTimeout чтобы не блокировать текущий event
+    setTimeout(() => input.click(), 0)
   }
 
   return (

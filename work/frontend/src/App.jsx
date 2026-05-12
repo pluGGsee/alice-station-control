@@ -63,11 +63,11 @@ export default function App() {
         <StatusBadge online={status.online} aliceState={status.aliceState} />
       </header>
 
-      {/* 2 колонки */}
+      {/* 2 колонки — одинаковые */}
       <div className="flex-1 flex gap-4 p-4 overflow-hidden">
 
-        {/* Левая — Алиса + Плеер */}
-        <div className="w-[400px] flex-shrink-0 flex flex-col gap-4 overflow-y-auto">
+        {/* Левая */}
+        <div className="flex-1 flex flex-col gap-4 overflow-y-auto min-w-0">
           <div className="g-panel rounded-3xl overflow-hidden">
             <AliceInput />
           </div>
@@ -79,7 +79,7 @@ export default function App() {
           />
         </div>
 
-        {/* Правая — Команды + Плейлисты + Поиск */}
+        {/* Правая */}
         <div className="flex-1 flex flex-col gap-4 overflow-y-auto min-w-0">
           <QuickCommands />
           <PlaylistPanel />
