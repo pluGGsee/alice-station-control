@@ -18,44 +18,88 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #c4c4c8;
-  background-attachment: fixed;
+  /* Серый фон как на референсе */
+  background-color: #b8b8bc;
 }
 
-/* Утилиты glassmorphism для нашего проекта */
-.glass-panel {
-  background: rgba(255, 255, 255, 0.55);
+/* ===== Liquid Glass — нейтральный серый стиль как на референсе ===== */
+
+/* Основная панель */
+.g-panel {
+  background: rgba(210, 210, 215, 0.60);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+/* Карточка / элемент */
+.g-card {
+  background: rgba(225, 225, 228, 0.55);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.50);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
-.glass-sidebar {
-  background: rgba(30, 24, 48, 0.82);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+/* Кнопка */
+.g-btn {
+  background: rgba(220, 220, 224, 0.50);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  color: #3a3a3c;
+  transition: all 0.15s ease;
+}
+.g-btn:hover {
+  background: rgba(235, 235, 238, 0.70);
+  border-color: rgba(255, 255, 255, 0.70);
+}
+.g-btn:active {
+  background: rgba(200, 200, 204, 0.60);
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.70);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+/* Кнопка акцент — тёмная (как в референсе) */
+.g-btn-dark {
+  background: rgba(50, 50, 54, 0.80);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f0f0f0;
+  transition: all 0.15s ease;
+}
+.g-btn-dark:hover {
+  background: rgba(70, 70, 74, 0.85);
 }
 
-.glass-input {
-  background: rgba(255, 255, 255, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.60);
+/* Поле ввода */
+.g-input {
+  background: rgba(215, 215, 220, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  color: #1c1c1e;
+  transition: all 0.15s ease;
 }
-
-.glass-input:focus {
-  background: rgba(255, 255, 255, 0.50);
+.g-input::placeholder { color: rgba(60, 60, 67, 0.45); }
+.g-input:focus {
   outline: none;
-  border-color: rgba(124, 58, 237, 0.5);
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+  background: rgba(225, 225, 230, 0.65);
+  border-color: rgba(255, 255, 255, 0.75);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+}
+
+/* Шапка */
+.g-header {
+  background: rgba(195, 195, 200, 0.65);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+}
+
+/* Разделитель */
+.g-divider {
+  background: rgba(0, 0, 0, 0.10);
+  height: 1px;
+}
+
+/* Hover строка */
+.g-row:hover {
+  background: rgba(0, 0, 0, 0.05);
 }
 
 @theme inline {

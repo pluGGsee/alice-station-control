@@ -90,41 +90,33 @@ def search_tracks(query: str, limit: int = 10) -> list:
 
 
 def get_playlists() -> list:
+    """Быстрая загрузка списка плейлистов БЕЗ загрузки треков."""
     try:
         client = _get_client()
         playlists = client.users_playlists_list()
-        result = []
-        for p in (playlists or []):
-            # Берём обложку из первого трека плейлиста
-            cover_url = None
-            try:
-                if p.track_count and p.track_count > 0:
-                    full = client.users_playlists(kind=p.kind)
-                    if full and full.tracks:
-                        first = full.tracks[0].fetch_track()
-                        cover_url = _cover(first.cover_uri, "200x200")
-            except Exception:
-                pass
-            result.append({
+        return [
+            {
                 "id": str(p.kind),
                 "title": p.title,
                 "track_count": p.track_count,
-                "cover_url": cover_url,
-            })
-        return result
+                "cover_url": None,  # загружается отдельно через /playlist-cover или из localStorage
+            }
+            for p in (playlists or [])
+        ]
     except Exception as e:
         logger.debug(f"get_playlists error: {e}")
         return []
 
 
-def get_playlist_tracks(kind: int) -> list:
+def get_playlist_tracks(kind: int, limit: int = 50) -> list:
+    """Загружает первые N треков плейлиста."""
     try:
         client = _get_client()
         playlist = client.users_playlists(kind=kind)
         if not playlist or not playlist.tracks:
             return []
         tracks = []
-        for t in playlist.tracks:
+        for t in playlist.tracks[:limit]:
             try:
                 track = t.fetch_track()
                 artists = ", ".join(a.name for a in (track.artists or []))

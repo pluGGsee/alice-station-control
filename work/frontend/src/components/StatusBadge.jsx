@@ -9,23 +9,18 @@ export default function StatusBadge({ online, aliceState }) {
             <>
               <motion.span
                 key="ping"
-                className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
-                animate={{ scale: [1, 1.8, 1], opacity: [0.75, 0, 0.75] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                className="absolute inline-flex h-full w-full rounded-full bg-[#34c759] opacity-60"
+                animate={{ scale: [1, 1.9, 1], opacity: [0.6, 0, 0.6] }}
+                transition={{ duration: 2.4, repeat: Infinity }}
               />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#34c759]" />
             </>
           ) : (
-            <motion.span
-              key="offline"
-              className="relative inline-flex rounded-full h-2.5 w-2.5 bg-slate-400"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#8e8e93]" />
           )}
         </AnimatePresence>
       </div>
-      <span className="text-xs font-medium text-slate-600">
+      <span className="text-xs font-medium text-[#6e6e73]">
         {online ? (aliceState === 'IDLE' ? 'Онлайн' : 'Слушает...') : 'Офлайн'}
       </span>
     </div>
