@@ -184,6 +184,8 @@ alice-station-control/
 
 ## 🗺️ Roadmap (v2)
 
+- [ ] **Multi-device support** — connect any Yandex Station model (Mini, Max, Lite, etc.) with automatic model detection via Quasar API + mDNS discovery
+- [ ] **Setup wizard** — web UI for first-time configuration (auto-discover stations on network, guided token setup, no manual config.py editing)
 - [ ] Schedules & timers
 - [ ] Smart home control (Zigbee)
 - [ ] Command history
@@ -382,6 +384,8 @@ alice-station-control/
 
 ## 🗺️ Планы (v2)
 
+- [ ] **Поддержка любой модели** — подключение Станции Мини, Макс, Лайт и других с автоопределением модели через Quasar API + mDNS обнаружение в сети
+- [ ] **Мастер установки** — веб-интерфейс для первой настройки: автопоиск станций в сети, пошаговая авторизация без ручного редактирования config.py
 - [ ] Расписание и таймеры
 - [ ] Управление умным домом (Zigbee)
 - [ ] История команд

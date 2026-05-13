@@ -85,6 +85,8 @@ python3 get_token.py   # new YANDEX_TOKEN
 
 ## What's Left for v2
 
+- **Multi-device support**: connect any Yandex Station model (Mini, Max, Lite) with auto-detection. Infrastructure already exists — `load_local_speakers()` in `yandex_quasar.py` (Quasar API) and `YandexIOListener` in `yandex_glagol.py` (mDNS/zeroconf) — just not wired up. Plan: on startup, discover all stations → let user pick → load platform/device_id dynamically instead of config.py hardcode.
+- **Setup wizard**: web UI for first-time config (token input, station picker, save to config.py). No more manual file editing for new users.
 - Schedules / timers
 - Smart home control (Zigbee devices via Alice)
 - Command history log
